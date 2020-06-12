@@ -334,5 +334,5 @@ if __name__ == "__main__":
             #     SKELETON_FILENAME_FORMAT.format(ith_img),
             #     skels_to_save)
     finally:
-        video_writer.stop()
+        #video_writer.stop()
         print("Program ends")

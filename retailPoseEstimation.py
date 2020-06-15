@@ -31,9 +31,9 @@ def get_command_line_arguments():
             "(1) a video, (2) a folder of images, (3) or web camera.")
         parser.add_argument("-m", "--model_path", required=False,
                             default='model/trained_classifier.pickle')
-        parser.add_argument("-t", "--data_type", required=False, default='folder',
+        parser.add_argument("-t", "--data_type", required=False, default='video',
                             choices=["video", "folder", "webcam"])
-        parser.add_argument("-p", "--data_path", required=False, default="./images",
+        parser.add_argument("-p", "--data_path", required=False, default="./video/42.mp4",
                             help="path to a video file, or images folder, or webcam. \n"
                             "For video and folder, the path should be "
                             "absolute or relative to this project's root. "
@@ -290,6 +290,7 @@ if __name__ == "__main__":
     # -- Read images and process
     try:
         ith_img = -1
+        actionList = []
         while images_loader.has_image():
 
             # -- Read image
@@ -319,8 +320,22 @@ if __name__ == "__main__":
             # Print label of a person
             if len(dict_id2skeleton):
                 min_id = min(dict_id2skeleton.keys())
-                print("prediced label is :", dict_id2label[min_id])
-                print("prediced label is :", dict_id2label[min_id + 1])
+                print("prediced label is :", dict_id2label[min_id], len(dict_id2label))
+                if dict_id2label[min_id] == 'pick' and ['pick'] not in actionList:
+                    actionList.append([dict_id2label[min_id]])
+                elif ['pick'] in actionList and dict_id2label[min_id] == 'view' and ['view'] not in actionList: 
+                    actionList.append([dict_id2label[min_id]])
+                elif all(i in actionList for i in [['pick'],['view']]) and (dict_id2label[min_id] == 'pick' or dict_id2label[min_id] == 'drop'):
+                    actionList.append([dict_id2label[min_id]])
+                if len(actionList) == 3 and all(i in actionList for i in [['pick'],['view'],['drop']]):
+                    print(" ----- ITEM TAKEN -----")
+                    actionList = []
+                elif len(actionList) == 3 and all(i in actionList for i in [['pick'],['view'],['pick']]):
+                    print(" ------ ITEM RETURN -----")
+                    actionList = []
+                print("list -> ", actionList)
+                # if len(dict_id2label) > 1:
+                #     print("prediced label is :", dict_id2label[2])
 
             # -- Display image, and write to video.avi
             img_displayer.display(img_disp, wait_key_ms=1)

@@ -20,7 +20,7 @@ import cv2
 import os
 import sys
 import simplejson
-from sklearn.preprocessing import OneHotEncoder
+# from sklearn.preprocessing import OneHotEncoder
 
 
 # Image info includes: [cnt_action, cnt_clip, cnt_image, img_action_label, filepath]

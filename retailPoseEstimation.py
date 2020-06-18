@@ -13,7 +13,7 @@ if True:  # Include project path
     import utils.lib_commons as lib_commons
     from utils.lib_openpose import SkeletonDetector
     from utils.lib_tracker import Tracker 
-    from utils.lib_classifier import *  # Import all sklearn related libraries
+    from utils.lib_classifier import *
 
 
 def par(path):  # Pre-Append ROOT to the path if it's not absolute
@@ -37,9 +37,7 @@ def get_command_line_arguments():
                             help="path to a video file, or images folder, or webcam. \n"
                             "For video and folder, the path should be "
                             "absolute or relative to this project's root. "
-                            "For webcam, either input an index or device name. ")
-        parser.add_argument("-o", "--output_folder", required=False, default='output/',
-                            help="Which folder to save result to.")
+                            "For webcam, either input an index or device name. ")      
 
         args = parser.parse_args()
         return args
@@ -49,36 +47,11 @@ def get_command_line_arguments():
         args.data_path = ROOT + args.data_path
     return args
 
-
-# def get_dst_folder_name(src_data_type, src_data_path):
-#     ''' Compute a output folder name based on data_type and data_path.
-#         The final output of this script looks like this:
-#             DST_FOLDER/folder_name/vidoe.avi
-#             DST_FOLDER/folder_name/skeletons/XXXXX.txt
-#     '''
-
-#     assert(src_data_type in ["video", "folder", "webcam"])
-
-#     if src_data_type == "video":  # /root/data/video.avi --> video
-#         folder_name = os.path.basename(src_data_path).split(".")[-2]
-
-#     elif src_data_type == "folder":  # /root/data/video/ --> video
-#         folder_name = src_data_path.rstrip("/").split("/")[-1]
-
-#     elif src_data_type == "webcam":
-#         # month-day-hour-minute-seconds, e.g.: 02-26-15-51-12
-#         folder_name = lib_commons.get_time_string()
-
-#     return folder_name
-
-
 args = get_command_line_arguments()
 
 SRC_DATA_TYPE = args.data_type
 SRC_DATA_PATH = args.data_path
 SRC_MODEL_PATH = args.model_path
-
-#DST_FOLDER_NAME = get_dst_folder_name(SRC_DATA_TYPE, SRC_DATA_PATH)
 
 # -- Settings
 
@@ -90,14 +63,6 @@ SKELETON_FILENAME_FORMAT = cfg_all["skeleton_filename_format"]
 
 # Action recognition: number of frames used to extract features.
 WINDOW_SIZE = int(cfg_all["features"]["window_size"])
-
-# Output folder
-# DST_FOLDER = args.output_folder + "/" + DST_FOLDER_NAME + "/"
-# DST_SKELETON_FOLDER_NAME = cfg["output"]["skeleton_folder_name"]
-# DST_VIDEO_NAME = cfg["output"]["video_name"]
-# # framerate of output video.avi
-# DST_VIDEO_FPS = float(cfg["output"]["video_fps"])
-
 
 # Video setttings
 
@@ -174,10 +139,7 @@ class MultiPersonClassifier(object):
                 self.dict_id2clf[id] = self._create_classifier(id)
 
             classifier = self.dict_id2clf[id]
-            id2label[id] = classifier.predict(skeleton)  # predict label
-            # print("\n\nPredicting label for human{}".format(id))
-            # print("  skeleton: {}".format(skeleton))
-            # print("  label: {}".format(id2label[id]))
+            id2label[id] = classifier.predict(skeleton)  # predict label          
 
         return id2label
 
@@ -229,8 +191,7 @@ def draw_result_img(img_disp, ith_img, humans, dict_id2skeleton,
         for id, label in dict_id2label.items():
             skeleton = dict_id2skeleton[id]
             # scale the y data back to original
-            skeleton[1::2] = skeleton[1::2] / scale_h
-            # print("Drawing skeleton: ", dict_id2skeleton[id], "with label:", label, ".")
+            skeleton[1::2] = skeleton[1::2] / scale_h            
             lib_plot.draw_action_result(img_disp, id, skeleton, label)
 
     # Add blank to the left for displaying prediction scores of each class
@@ -275,17 +236,7 @@ if __name__ == "__main__":
 
     # -- Image reader and displayer
     images_loader = select_images_loader(SRC_DATA_TYPE, SRC_DATA_PATH)
-    img_displayer = lib_images_io.ImageDisplayer()
-
-    # -- Init output
-
-    # output folder
-    # os.makedirs(DST_FOLDER, exist_ok=True)
-    # os.makedirs(DST_FOLDER + DST_SKELETON_FOLDER_NAME, exist_ok=True)
-
-    # video writer
-    # video_writer = lib_images_io.VideoWriter(
-    #     DST_FOLDER + DST_VIDEO_NAME, DST_VIDEO_FPS)
+    img_displayer = lib_images_io.ImageDisplayer()    
 
     # -- Read images and process
     try:
@@ -317,7 +268,7 @@ if __name__ == "__main__":
             img_disp = draw_result_img(img_disp, ith_img, humans, dict_id2skeleton,
                                        skeleton_detector, multiperson_classifier)
 
-            # Print label of a person
+            # Logic for finding the inferences
             if len(dict_id2skeleton):
                 min_id = min(dict_id2skeleton.keys())
                 for person in dict_id2label:
@@ -340,17 +291,8 @@ if __name__ == "__main__":
                             actionList[person] = []
                 print("list -> ", actionList)                
 
-            # -- Display image, and write to video.avi
-            img_displayer.display(img_disp, wait_key_ms=1)
-            #video_writer.write(img_disp)
+            # -- Display image
+            img_displayer.display(img_disp, wait_key_ms=1)          
 
-            # -- Get skeleton data and save to file
-            # skels_to_save = get_the_skeleton_data_to_save_to_disk(
-            #     dict_id2skeleton)
-            # lib_commons.save_listlist(
-            #     DST_FOLDER + DST_SKELETON_FOLDER_NAME +
-            #     SKELETON_FILENAME_FORMAT.format(ith_img),
-            #     skels_to_save)
-    finally:
-        #video_writer.stop()
+    finally:        
         print("Program ends")
